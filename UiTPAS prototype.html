@@ -1,0 +1,457 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>UiTPAS maximumbedrag prototype</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --groen:#39AC8D; --teal:#168B8D; --teal5:#3EB9BB;
+    --n0:#fff; --n100:#EAECEC; --n200:#CFD3D3; --n400:#899494; --n500:#6E7777; --n900:#2E3333;
+    --oranje:#F77F3C; --rood:#E5484D; --mailgroen:#149773; --outlook:#0F6CBD;
+    --dark:#0f1b2d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'Poppins',system-ui,sans-serif;background:#f2f4f7;color:var(--n900);
+       min-height:100vh;padding:24px 16px 110px}
+  .stage{display:flex;justify-content:center;align-items:flex-start;min-height:70vh}
+  .card{background:#fff;border-radius:18px;box-shadow:0 8px 30px rgba(15,27,45,.08);
+        width:100%;max-width:560px;padding:28px}
+  h1,h2,h3{margin:0}
+  .btn{display:block;width:100%;border:0;border-radius:12px;padding:15px;font-family:inherit;
+       font-size:16px;font-weight:600;cursor:pointer;background:var(--dark);color:#fff}
+  .btn.green{background:var(--groen)}
+  .btn.ghost{background:#fff;color:var(--n900);border:1px solid var(--n200);font-weight:500}
+  .btn.link{background:none;color:var(--n500);font-weight:500;text-decoration:underline;width:auto;margin:0 auto}
+  .muted{color:var(--n500)}
+
+  /* nav */
+  .nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #e7eaee;
+       display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:50}
+  .nav button{border:1px solid var(--n200);background:#fff;border-radius:12px;padding:10px 16px;
+       font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;display:flex;gap:8px;align-items:center}
+  .home{position:fixed;top:16px;left:16px;z-index:60;border:1px solid var(--n200);background:#fff;border-radius:999px;
+       padding:8px 14px;font-family:inherit;font-weight:600;font-size:14px;cursor:pointer;display:flex;gap:8px;align-items:center;color:var(--n500)}
+  .gear{position:fixed;top:16px;right:16px;z-index:60;border:0;background:none;cursor:pointer;font-size:22px;color:#9aa3ab}
+  .panel{position:fixed;top:56px;right:16px;z-index:61;background:#fff;border:1px solid var(--n200);border-radius:14px;
+         box-shadow:0 12px 40px rgba(0,0,0,.16);padding:16px;width:260px;display:none}
+  .panel.open{display:block}
+  .panel h4{margin:0 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--n500)}
+  .panel .row{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 14px}
+  .chip{border:1px solid var(--n200);background:#fff;border-radius:9px;padding:6px 10px;font-family:inherit;
+        font-size:13px;cursor:pointer}
+  .chip.active{background:var(--dark);color:#fff;border-color:var(--dark)}
+
+  /* event */
+  .ev-img{width:100%;height:230px;object-fit:cover;border-radius:14px;background:#dfe3e8;display:block}
+  .badges{display:flex;gap:8px;margin:16px 0 10px}
+  .badge{background:#eef1f4;border-radius:999px;padding:5px 12px;font-size:13px;font-weight:600;color:#41505f}
+  .ev-meta{color:var(--n500);font-size:15px;margin:6px 0}
+  details{margin:14px 0;border:1px solid #eceff2;border-radius:12px;padding:0 14px}
+  summary{cursor:pointer;padding:14px 0;font-weight:600;list-style:none}
+  summary::-webkit-details-marker{display:none}
+  details p{margin:0 0 12px;color:#41505f;font-size:14px;line-height:1.5}
+
+  /* tariffs */
+  .tariff{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--n200);
+          border-radius:12px;padding:14px 16px;margin-bottom:10px;cursor:pointer;font-weight:500}
+  .tariff.sel{border-color:var(--dark);background:#f6f8fa;box-shadow:inset 0 0 0 1px var(--dark)}
+  .tariff.dis{opacity:.55;cursor:not-allowed;background:#f3f4f6}
+  .tariff .radio{width:18px;height:18px;border-radius:999px;border:2px solid #b9c0c8;margin-right:12px;flex:none}
+  .tariff.sel .radio{border-color:var(--dark);box-shadow:inset 0 0 0 3px #fff, inset 0 0 0 6px var(--dark)}
+  .tleft{display:flex;align-items:center;gap:2px}
+  .disnote{font-size:12px;color:var(--rood);margin:-4px 0 12px 30px}
+  .field label{font-size:13px;color:var(--n500)}
+  .field input{width:100%;border:1px solid var(--n200);border-radius:12px;padding:14px;font-family:inherit;font-size:15px;margin-top:6px}
+  .alert{border-radius:12px;padding:14px 16px;margin:14px 0;font-size:14px;line-height:1.45;display:flex;gap:10px}
+  .alert .ico{flex:none;font-weight:700}
+  .alert.green{background:#e7f6f0;color:#12694f;border:1px solid #bfe6d6}
+  .alert.orange{background:#fdeee2;color:#9a4d16;border:1px solid #f6d3b4}
+  .alert.red{background:#fdecec;color:#a3282c;border:1px solid #f4c3c4}
+
+  /* betalen / bevestiging */
+  .sum{border:1px solid var(--n200);border-radius:12px;overflow:hidden;margin-bottom:18px}
+  .sum .r{display:flex;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #eef1f3}
+  .sum .r:last-child{border-bottom:0;font-weight:700}
+  .sum .r .ev{color:var(--n500)}
+  .check{width:54px;height:54px;border-radius:999px;border:2.5px solid var(--groen);color:var(--groen);
+         display:flex;align-items:center;justify-content:center;margin:4px auto 16px;font-size:26px}
+  .center{text-align:center}
+
+  /* inbox (outlook-ish) */
+  .ob{border:1px solid #e2e6ea;border-radius:14px;overflow:hidden;background:#fff}
+  .ob-top{background:var(--outlook);color:#fff;padding:12px 16px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .ob-body{display:flex;min-height:360px}
+  .ob-rail{width:120px;background:#f3f6fb;border-right:1px solid #e2e6ea;padding:12px 8px;font-size:13px;color:#41505f}
+  .ob-rail div{padding:8px 10px;border-radius:8px;margin-bottom:2px}
+  .ob-rail .on{background:#e1ecfa;color:#0f4c92;font-weight:600}
+  .ob-list{flex:1}
+  .mail-item{display:flex;flex-direction:column;gap:2px;padding:12px 16px;border-bottom:1px solid #eef1f4;cursor:default}
+  .mail-item.unread{background:#f7fbff}
+  .mail-item.clickable{cursor:pointer}
+  .mail-item.clickable:hover{background:#eef5ff}
+  .mail-item .from{display:flex;justify-content:space-between;font-size:14px}
+  .mail-item.unread .from{font-weight:700}
+  .mail-item .subj{font-size:13px}
+  .mail-item .prev{font-size:12px;color:var(--n500)}
+  .mail-item.read{color:#7c858d}
+
+  /* mail read */
+  .mailhead{background:var(--mailgroen);padding:16px;border-radius:12px 12px 0 0;display:flex;align-items:center}
+  .mailhead img{height:26px}
+  .mailhead .fb{color:#fff;font-weight:700;font-size:18px;letter-spacing:.02em}
+  .mailmeta{border:1px solid #eceff2;border-top:0;border-radius:0 0 12px 12px;padding:16px}
+  .mailmeta .h{font-size:13px;color:var(--n500);margin-bottom:2px}
+  .mailmeta .body{margin-top:14px;font-size:14px;line-height:1.6;white-space:pre-line;color:#2c3339}
+
+  /* phone / app */
+  .phonewrap{display:flex;justify-content:center}
+  .phone{width:375px;height:812px;background:var(--n100);position:relative;overflow:hidden;border-radius:0;
+         box-shadow:0 14px 50px rgba(6,59,61,.18);font-size:14px}
+  .status{height:44px;background:var(--groen);color:#fff;display:flex;align-items:center;justify-content:space-between;
+          padding:0 18px;font-size:14px;font-weight:600}
+  .status .ic{display:flex;gap:5px;align-items:center;font-size:12px}
+  .topbar{height:48px;background:var(--groen);color:#fff;display:flex;align-items:center;position:relative}
+  .topbar .bk{position:absolute;left:14px;font-size:20px}
+  .topbar .tt{width:100%;text-align:center;font-weight:700;font-size:16px}
+  .abanner{background:var(--teal);color:#fff;padding:18px 18px 22px;position:relative;overflow:hidden}
+  .abanner h3{font-size:16px;font-weight:700;margin-bottom:10px;position:relative;z-index:2}
+  .abanner p{font-size:14px;line-height:1.45;margin:0;position:relative;z-index:2;max-width:280px}
+  .abanner .glass{position:absolute;right:-10px;top:8px;width:120px;height:120px;opacity:.18;z-index:1}
+  .acard{background:#fff;margin-top:0;padding:14px 16px;border-bottom:.5px solid var(--n200)}
+  .acard .kt{color:var(--teal);font-weight:700;font-size:14px;margin-bottom:8px}
+  .acard .lead{font-size:14px;line-height:1.5;margin:0 0 12px}
+  .acard .lead .big{font-size:22px;font-weight:700}
+  .bar{display:flex;align-items:center;gap:10px;margin:6px 0 10px}
+  .bar .track{flex:1;height:23px;background:var(--n200);border-radius:6px;overflow:hidden;position:relative}
+  .bar .fill{height:100%;background:var(--groen);border-radius:6px;display:flex;align-items:center;padding-left:10px;
+             color:#fff;font-size:12px;font-weight:600;white-space:nowrap}
+  .over{display:flex;justify-content:flex-end;color:var(--n900);font-size:14px;margin-bottom:2px}
+  .help{font-size:12px;color:var(--n400);margin-top:6px;line-height:1.4}
+  .tgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin:6px 0 12px}
+  .tk{position:relative;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+  .tk.f{background:var(--teal)}
+  .tk.e{border:1.5px dashed var(--teal);background:#F4FBFB;color:var(--teal);font-weight:700;font-size:11px}
+  .tk::before,.tk::after{content:"";position:absolute;width:8px;height:8px;border-radius:999px;background:#fff;top:50%;transform:translateY(-50%)}
+  .tk::before{left:-4px}.tk::after{right:-4px}
+  .tk.e::before,.tk.e::after{background:#F4FBFB;box-shadow:inset 0 0 0 1.5px var(--teal)}
+  .tk .star{width:15px;height:15px}
+  .tabbar{position:absolute;bottom:0;left:0;right:0;height:84px;background:#fff;box-shadow:0 -2px 10px rgba(6,59,61,.08);
+          display:flex;align-items:flex-start;justify-content:space-around;padding-top:8px}
+  .tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;color:var(--n500);width:33%}
+  .tab.active{color:var(--teal);font-weight:600}
+  .tab .spar{width:56px;height:56px;border-radius:999px;background:#fff;box-shadow:0 0 10px rgba(6,59,61,.18);
+             display:flex;align-items:center;justify-content:center;margin-top:-22px}
+  .homeind{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:134px;height:5px;background:#000;border-radius:99px}
+
+  /* vergelijk */
+  .vq{text-align:center;font-weight:700;font-size:20px;margin:6px 0 20px}
+  .compare{display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+  .mini{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .mini .lbl{font-weight:700;font-size:18px}
+  .mini .scaler{width:170px;height:368px;overflow:hidden;border-radius:8px;box-shadow:0 8px 26px rgba(6,59,61,.16)}
+  .mini .scaler .phone{transform:scale(.4533);transform-origin:top left}
+</style>
+</head>
+<body>
+
+<button class="home" onclick="go('event')">🎟️ Start</button>
+<button class="gear" onclick="togglePanel()">⚙️</button>
+
+<div class="panel" id="panel">
+  <h4>Aankoop-scenario</h4>
+  <div class="row" id="scRow"></div>
+  <h4>Ga naar scherm</h4>
+  <div class="row" id="flowRow"></div>
+  <h4>App-versie budgetscherm</h4>
+  <div class="row" id="appRow"></div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="nav">
+  <button onclick="prev()">← Vorige</button>
+  <button onclick="next()">Volgende →</button>
+</div>
+
+<script>
+const S={screen:'event',scenario:'voldoende',appTarget:'appA',tariff:null,confirmed:false,kansDisabled:false};
+const ORDER=['event','tickets','betalen','bevestiging','inbox','mail','appA','appB0','appC0','vergelijk'];
+const stage=document.getElementById('stage');
+
+const STAR='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77 5.82 21l1.18-6.86-5-4.87 7.1-1.01z"/></svg>';
+const GLASS='<svg class="glass" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="7"><circle cx="42" cy="42" r="30"/><line x1="63" y1="63" x2="92" y2="92" stroke-linecap="round"/></svg>';
+
+function tariffs(){
+  const kans = '€ 5,80';
+  return {basis:{l:'Basistarief',p:'€ 29,00'},vvk:{l:'vvk',p:'€ 29,00'},add:{l:'add',p:'€ 32,00'},
+          kans:{l:'UiTPASKansentarief met UiTPAS Regio Brugge',p:kans}};
+}
+
+/* ---------- FLOW SCREENS ---------- */
+function evScreen(){
+  return `<div class="card">
+    <img class="ev-img" src="eventfoto-raymond.png" alt="Raymond Van Het Groenewoud"
+      onerror="this.style.display='none'">
+    <div class="badges"><span class="badge">Wo 5 aug</span><span class="badge">UiTPAS</span></div>
+    <h1 style="font-size:30px;line-height:1.15">Raymond Van Het Groenewoud</h1>
+    <div class="ev-meta">📍 Binnenplein Gruuthuse, Dijver 17C, 8000 Brugge</div>
+    <div class="ev-meta">🎫 Concert · Van € 5,80 - € 32,00</div>
+    <div class="ev-meta">👤 Geschikt voor alle leeftijden</div>
+    <button class="btn green" style="margin:18px 0 4px" onclick="go('tickets')">Koop tickets</button>
+    <details>
+      <summary>ℹ️ Info</summary>
+      <p>Moeten we Raymond Van Het Groenewoud nog voorstellen? De naar Brugge uitgeweken Nederlandstalige liedjesschrijver en zanger is een echt Belpop-monument. Met onverwoestbare classics als 'Je Veux de l'Amour', 'Vlaanderen Boven', 'Liefde voor Muziek' en 'Twee Meisjes' is hij een van de bekendste Belgische artiesten.</p>
+      <p>Dit concert gaat door in open lucht. In geval van slecht weer verhuizen we naar de Brugse Stadsschouwburg. Tickethouders worden de dag van het concert op de hoogte gebracht.</p>
+      <p><b>Wanneer:</b> woensdag 5 augustus 2026 van 20:00 tot 23:30<br>
+         <b>Contact:</b> www.cactusmusic.be · info@cactusmusic.be · 050 33 20 14<br>
+         <b>Georganiseerd door:</b> Cactus Muziekcentrum vzw</p>
+    </details>
+  </div>`;
+}
+
+function tariffRow(key,t){
+  const dis = key==='kans' && S.kansDisabled;
+  const sel = S.tariff===key;
+  const cls = 'tariff'+(sel?' sel':'')+(dis?' dis':'');
+  const click = dis? '' : `onclick="selectTariff('${key}')"`;
+  return `<div class="${cls}" ${click}>
+      <div class="tleft"><span class="radio"></span><span>${t.l}</span></div>
+      <b>${t.p}</b></div>`+
+      (dis?`<div class="disnote">Je kansentarief budget is op.</div>`:'');
+}
+
+function ticketsScreen(){
+  const T=tariffs();
+  let rows='';
+  for(const k of ['basis','vvk','add','kans']) rows+=tariffRow(k,T[k]);
+  let extra='';
+  if(S.tariff && S.tariff!=='kans'){
+    extra=`<button class="btn" onclick="go('betalen')">Verder</button>`;
+  } else if(S.tariff==='kans' && !S.confirmed){
+    extra=`<div class="field"><label>Geef je UiTPAS-nummer in</label>
+      <input placeholder="bv. 1234567890"></div>
+      <button class="btn" style="margin-top:14px" onclick="confirmUitpas()">Bevestig</button>`;
+  } else if(S.tariff==='kans' && S.confirmed){
+    if(S.scenario==='voldoende'){
+      extra=`<div class="alert green"><span class="ico">✔</span><span>Dit ticket koop je aan met kansentarief. Bekijk in de app hoeveel budget je over hebt.</span></div>
+      <button class="btn" onclick="go('betalen')">Ga verder naar betalen</button>`;
+    } else if(S.scenario==='gedeeltelijk'){
+      extra=`<div class="alert orange"><span class="ico">!</span><span>Je kansentarief budget is bijna op. Dit is de laatste keer dat je een ticket kan kopen aan kansentarief dit jaar. Meer informatie <a href="#" onclick="go('appA');return false" style="color:inherit;font-weight:600;text-decoration:underline">vind je in de app</a>.</span></div>
+      <button class="btn" onclick="go('betalen')">Ga verder naar betalen</button>`;
+    } else {
+      extra=`<div class="alert red"><span class="ico">✕</span><span>Je kansentarief budget is op. Je kan enkel een gewoon ticket kopen. Meer info in de app.</span></div>`;
+    }
+  }
+  return `<div class="card"><h2 style="font-size:24px;margin-bottom:18px">Kies je ticket</h2>
+    ${rows}${extra}</div>`;
+}
+
+function betalenScreen(){
+  const T=tariffs(); const t=T[S.tariff]||T.kans;
+  return `<div class="card"><h2 style="font-size:24px;margin-bottom:18px">Betalen</h2>
+    <div class="sum">
+      <div class="r"><span class="ev">Raymond Van Het Groenewoud</span><span>Wo 5 aug</span></div>
+      <div class="r"><span>${t.l}</span><span>${t.p}</span></div>
+      <div class="r"><span>Totaal</span><span>${t.p}</span></div>
+    </div>
+    <button class="btn" onclick="go('bevestiging')">Betaal</button>
+    <button class="btn ghost" style="margin-top:10px" onclick="go('annuleer')">Annuleer</button>
+  </div>`;
+}
+
+function bevestigingScreen(){
+  return `<div style="width:100%;max-width:560px">
+    <div class="card center">
+      <div class="check">✓</div>
+      <h2 style="font-size:22px;margin-bottom:8px">Bedankt voor je aankoop</h2>
+      <p class="muted" style="margin:0">Je ticket is bevestigd. We bezorgen het via mail.</p>
+    </div>
+    <div style="text-align:center;margin-top:18px">
+      <button class="btn link" onclick="go('inbox')">Ga naar je mailbox</button>
+    </div>
+  </div>`;
+}
+
+function annuleerScreen(){
+  return `<div class="card center"><h2 style="font-size:22px">Je aankoop is geannuleerd.</h2>
+    <p class="muted">Gebruik de pijltjes of het tandwiel om verder te gaan.</p></div>`;
+}
+
+function inboxScreen(){
+  const dummy=[
+    ['Bibliotheek Brugge','Onze nieuwe najaarscatalogus','Ontdek de nieuwste boeken en workshops...'],
+    ['Webshop','Je bestelling is verzonden','Je pakje is onderweg en wordt morgen...'],
+    ['Dr. Peeters','Bevestiging afspraak','Uw afspraak staat gepland op dinsdag...'],
+    ['Marie','Zin in een koffie?','Hey! Lang geleden, zullen we...']
+  ];
+  let items=`
+    <div class="mail-item unread"><div class="from"><span>Cactus Muziekcentrum</span><span>09:41</span></div>
+      <div class="subj">Je ticket voor Raymond Van Het Groenewoud</div>
+      <div class="prev">Bedankt voor je aankoop. In bijlage vind je je ticket...</div></div>
+    <div class="mail-item unread clickable" onclick="go('mail')"><div class="from"><span>UiTPAS</span><span>09:41</span></div>
+      <div class="subj">Je UiTPAS kansentarief is gewijzigd</div>
+      <div class="prev">Beste, je kocht net een ticket met je UiTPAS aan kansentarief...</div></div>`;
+  for(const d of dummy) items+=`<div class="mail-item read"><div class="from"><span>${d[0]}</span><span>gisteren</span></div>
+      <div class="subj">${d[1]}</div><div class="prev">${d[2]}</div></div>`;
+  return `<div class="card" style="padding:0;overflow:hidden">
+    <div class="ob">
+      <div class="ob-top">✉ Postvak IN</div>
+      <div class="ob-body">
+        <div class="ob-rail"><div class="on">Postvak IN</div><div>Verzonden</div><div>Concepten</div><div>Ongewenst</div></div>
+        <div class="ob-list">${items}</div>
+      </div>
+    </div></div>`;
+}
+
+function mailScreen(){
+  return `<div class="card">
+    <div class="mailhead">
+      <img src="https://www.uitpas.be/_nuxt/img/logo_inverted.63c2e4c.svg" alt="UiTPAS"
+        onerror="this.style.display='none';document.getElementById('fb').style.display='inline'">
+      <span class="fb" id="fb" style="display:none">UiTPAS</span>
+    </div>
+    <div class="mailmeta">
+      <div class="h">Van: UiTPAS &lt;noreply@uitpas.be&gt;</div>
+      <div class="h">Aan: jij@voorbeeld.be</div>
+      <div class="h">Onderwerp: <b style="color:var(--n900)">Je UiTPAS kansentarief is gewijzigd</b></div>
+      <div class="body">Beste,
+
+Je kocht net een ticket met je UiTPAS aan kansentarief. Daardoor is je kansentarief budget aangepast.
+
+Let op: dit bericht is geen ticket.
+
+Wil je weten hoeveel kansentarief budget je dit jaar nog hebt? Open de UiTPAS-app.
+
+Heb je een vraag? Neem gerust contact op met je UiTPAS-balie in de buurt.
+
+Met vriendelijke groet,
+Het UiTPAS-team</div>
+      <button class="btn green" style="margin-top:18px" onclick="go(S.appTarget)">Bekijk je kansentarief</button>
+    </div>
+  </div>`;
+}
+
+/* ---------- APP SCREENS ---------- */
+function ticketGrid(filled,withPrice){
+  let g='';
+  for(let i=0;i<25;i++){
+    if(i<filled) g+=`<div class="tk f">${STAR}</div>`;
+    else g+=`<div class="tk e">${withPrice?'€10':''}</div>`;
+  }
+  return `<div class="tgrid">${g}</div>`;
+}
+
+function appCard(version,state){
+  if(version==='A'){
+    return `<div class="acard">
+      <div class="kt">Kansentarief 2026</div>
+      <p class="lead"><b>Dankzij je UiTPAS kansentarief kreeg je dit jaar voor €200 korting.</b></p>
+      <div class="over">€50 over</div>
+      <div class="bar"><div class="track"><div class="fill" style="width:80%">€ 200 gebruikt</div></div></div>
+      <div class="help">Elk jaar (op 1 januari) start je opnieuw met €250 kansentarief. Het budget van vorig jaar wordt niet overgedragen. Meer info <a href="#" onclick="return false" style="color:var(--teal);text-decoration:underline">vind je hier</a>.</div>
+    </div>`;
+  }
+  const withPrice = version==='C';
+  let lead,extra='',filled;
+  if(state===0){filled=0;lead=`Je ging dit jaar al <span class="big">0 keer</span> op uitstap met kansentarief. Je kan <span class="big">25 keer</span> een ticket met UiTPAS kansentarief kopen.`;}
+  else if(state===5){filled=5;lead=`Je ging dit jaar <span class="big">5 keer</span> op uitstap met kansentarief. Je kan <span class="big">20 keer</span> een ticket met UiTPAS kansentarief kopen.`;}
+  else {filled=25;lead=`Je ging dit jaar <span class="big">25 keer</span> op uitstap met kansentarief. Je kan <span class="big">geen</span> tickets met UiTPAS kansentarief meer kopen dit jaar.`;
+        extra=`<p class="lead" style="font-size:13px;color:#41505f">Je kan nu geen tickets meer kopen met kansentarief tot het einde van dit jaar. Op 1 januari start je opnieuw met 25 kansentarief tickets.</p>`;}
+  return `<div class="acard">
+    <div class="kt">Kansentarief 2026</div>
+    <p class="lead">${lead}</p>${extra}
+    ${ticketGrid(filled,withPrice)}
+    <div class="help">Elk jaar (op 1 januari) start je opnieuw met 25 kansentarief tickets.</div>
+  </div>`;
+}
+
+function appBanner(version){
+  if(version==='A') return `<div class="abanner">${GLASS}<h3>Dit is je kansentarief voor 2026</h3>
+    <p>Als pashouder met kansentarief kan je elk jaar tickets kopen aan kansentarief tot het budget op is. Daarna kan je gewone tickets kopen.</p></div>`;
+  return `<div class="abanner">${GLASS}<h3>Dit zijn je kansentarief tickets voor 2026.</h3>
+    <p>Als pashouder met kansentarief kan je elk jaar 25 tickets kopen aan kansentarief. Daarna kan je gewone tickets kopen.</p></div>`;
+}
+
+function appHTML(version,state){
+  return `<div class="phone">
+    <div class="status"><span>9:41</span><span class="ic">▮▮▮ ᯤ 🔋</span></div>
+    <div class="topbar"><span class="bk">‹</span><span class="tt">Mijn kansentarief</span></div>
+    ${appBanner(version)}
+    <div style="height:12px;background:var(--n100)"></div>
+    ${appCard(version,state)}
+    <div class="tabbar">
+      <div class="tab">🏪<span>Voordelen</span></div>
+      <div class="tab"><div class="spar">▦</div><span>Sparen</span></div>
+      <div class="tab active">👤<span>Mijn UiTPAS</span></div>
+    </div>
+    <div class="homeind"></div>
+  </div>`;
+}
+function appScreen(version,state){return `<div class="phonewrap">${appHTML(version,state)}</div>`;}
+
+function vergelijkScreen(){
+  return `<div style="width:100%;max-width:760px">
+    <div class="vq">Welke vind je het duidelijkst?</div>
+    <div class="compare">
+      <div class="mini"><div class="lbl">A</div><div class="scaler">${appHTML('A')}</div></div>
+      <div class="mini"><div class="lbl">B</div><div class="scaler">${appHTML('B',5)}</div></div>
+      <div class="mini"><div class="lbl">C</div><div class="scaler">${appHTML('C',5)}</div></div>
+    </div>
+  </div>`;
+}
+
+/* ---------- ROUTER ---------- */
+function render(){
+  let h='';
+  switch(S.screen){
+    case 'event':h=evScreen();break;
+    case 'tickets':h=ticketsScreen();break;
+    case 'betalen':h=betalenScreen();break;
+    case 'bevestiging':h=bevestigingScreen();break;
+    case 'annuleer':h=annuleerScreen();break;
+    case 'inbox':h=inboxScreen();break;
+    case 'mail':h=mailScreen();break;
+    case 'appA':h=appScreen('A');break;
+    case 'appB0':h=appScreen('B',0);break;
+    case 'appB5':h=appScreen('B',5);break;
+    case 'appBvol':h=appScreen('B','vol');break;
+    case 'appC0':h=appScreen('C',0);break;
+    case 'appC5':h=appScreen('C',5);break;
+    case 'appCvol':h=appScreen('C','vol');break;
+    case 'vergelijk':h=vergelijkScreen();break;
+  }
+  stage.innerHTML=h;
+  renderPanel();
+}
+function go(sc){
+  if(sc==='tickets'){S.tariff=null;S.confirmed=false;S.kansDisabled=false;}
+  if(sc==='event'){S.tariff=null;S.confirmed=false;S.kansDisabled=false;S.scenario=S.scenario;}
+  if(sc.indexOf('app')===0) S.appTarget=sc;
+  S.screen=sc;render();window.scrollTo(0,0);
+}
+function selectTariff(k){S.tariff=k;S.confirmed=false;render();}
+function confirmUitpas(){S.confirmed=true;if(S.scenario==='geen')S.kansDisabled=true;render();}
+function prev(){let i=ORDER.indexOf(S.screen);if(i<0){go('betalen');return;}if(i>0)go(ORDER[i-1]);}
+function next(){let i=ORDER.indexOf(S.screen);if(i<0){go('bevestiging');return;}if(i<ORDER.length-1)go(ORDER[i+1]);}
+
+/* ---------- MODERATOR PANEL ---------- */
+function togglePanel(){document.getElementById('panel').classList.toggle('open');}
+function setScenario(s){S.scenario=s;S.tariff=null;S.confirmed=false;S.kansDisabled=false;if(S.screen==='tickets'||S.screen==='betalen')render();else renderPanel();}
+function renderPanel(){
+  const sc=[['voldoende','Voldoende'],['gedeeltelijk','Gedeeltelijk'],['geen','Geen budget']];
+  document.getElementById('scRow').innerHTML=sc.map(x=>
+    `<button class="chip ${S.scenario===x[0]?'active':''}" onclick="setScenario('${x[0]}')">${x[1]}</button>`).join('');
+  const fl=[['event','Event'],['tickets','Ticketkeuze'],['betalen','Betalen'],['bevestiging','Bevestiging'],['inbox','Inbox'],['mail','Mail']];
+  document.getElementById('flowRow').innerHTML=fl.map(x=>
+    `<button class="chip ${S.screen===x[0]?'active':''}" onclick="go('${x[0]}')">${x[1]}</button>`).join('');
+  const ap=[['appA','A'],['appB0','B·0'],['appC0','C·0'],['vergelijk','Vergelijk']];
+  document.getElementById('appRow').innerHTML=ap.map(x=>
+    `<button class="chip ${S.screen===x[0]?'active':''}" onclick="go('${x[0]}')">${x[1]}</button>`).join('');
+}
+render();
+</script>
+</body>
+</html>
