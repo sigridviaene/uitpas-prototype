@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
 <title>UiTPAS maximumbedrag prototype</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
@@ -184,7 +185,7 @@ const STAR='<svg class="star" viewBox="0 0 24 24" fill="#fff"><path d="M12 2l2.9
 const GLASS='<svg class="glass" viewBox="0 0 100 100" fill="none" stroke="#fff" stroke-width="7"><circle cx="42" cy="42" r="30"/><line x1="63" y1="63" x2="92" y2="92" stroke-linecap="round"/></svg>';
 
 function tariffs(){
-  const kans = S.scenario==='gedeeltelijk' ? '€ 17,40' : '€ 5,80';
+  const kans = '€ 5,80';
   return {basis:{l:'Basistarief',p:'€ 29,00'},vvk:{l:'vvk',p:'€ 29,00'},add:{l:'add',p:'€ 32,00'},
           kans:{l:'UiTPASKansentarief met UiTPAS Regio Brugge',p:kans}};
 }
@@ -238,7 +239,7 @@ function ticketsScreen(){
       extra=`<div class="alert green"><span class="ico">✔</span><span>Dit ticket koop je aan met kansentarief. Bekijk in de app hoeveel budget je over hebt.</span></div>
       <button class="btn" onclick="go('betalen')">Ga verder naar betalen</button>`;
     } else if(S.scenario==='gedeeltelijk'){
-      extra=`<div class="alert orange"><span class="ico">!</span><span>Je kansentarief budget is bijna op, een deel van de ticket wordt verminderd. Bekijk in de app hoeveel budget je over hebt.</span></div>
+      extra=`<div class="alert orange"><span class="ico">!</span><span>Je kansentarief budget is bijna op. Dit is de laatste keer dat je een ticket kan kopen aan kansentarief dit jaar. Meer informatie <a href="#" onclick="go('appA');return false" style="color:inherit;font-weight:600;text-decoration:underline">vind je in de app</a>.</span></div>
       <button class="btn" onclick="go('betalen')">Ga verder naar betalen</button>`;
     } else {
       extra=`<div class="alert red"><span class="ico">✕</span><span>Je kansentarief budget is op. Je kan enkel een gewoon ticket kopen. Meer info in de app.</span></div>`;
@@ -291,7 +292,7 @@ function inboxScreen(){
       <div class="subj">Je ticket voor Raymond Van Het Groenewoud</div>
       <div class="prev">Bedankt voor je aankoop. In bijlage vind je je ticket...</div></div>
     <div class="mail-item unread clickable" onclick="go('mail')"><div class="from"><span>UiTPAS</span><span>09:41</span></div>
-      <div class="subj">Je UiTPAS kansentarief budget</div>
+      <div class="subj">Je UiTPAS kansentarief is gewijzigd</div>
       <div class="prev">Beste, je kocht net een ticket met je UiTPAS aan kansentarief...</div></div>`;
   for(const d of dummy) items+=`<div class="mail-item read"><div class="from"><span>${d[0]}</span><span>gisteren</span></div>
       <div class="subj">${d[1]}</div><div class="prev">${d[2]}</div></div>`;
@@ -315,7 +316,7 @@ function mailScreen(){
     <div class="mailmeta">
       <div class="h">Van: UiTPAS &lt;noreply@uitpas.be&gt;</div>
       <div class="h">Aan: jij@voorbeeld.be</div>
-      <div class="h">Onderwerp: <b style="color:var(--n900)">Je UiTPAS kansentarief budget</b></div>
+      <div class="h">Onderwerp: <b style="color:var(--n900)">Je UiTPAS kansentarief is gewijzigd</b></div>
       <div class="body">Beste,
 
 Je kocht net een ticket met je UiTPAS aan kansentarief. Daardoor is je kansentarief budget aangepast.
@@ -350,7 +351,7 @@ function appCard(version,state){
       <p class="lead"><b>Dankzij je UiTPAS kansentarief kreeg je dit jaar voor €200 korting.</b></p>
       <div class="over">€50 over</div>
       <div class="bar"><div class="track"><div class="fill" style="width:80%">€ 200 gebruikt</div></div></div>
-      <div class="help">Elk jaar (op 1 januari) start je opnieuw met €250 kansentarief.</div>
+      <div class="help">Elk jaar (op 1 januari) start je opnieuw met €250 kansentarief. Het budget van vorig jaar wordt niet overgedragen. Meer info <a href="#" onclick="return false" style="color:var(--teal);text-decoration:underline">vind je hier</a>.</div>
     </div>`;
   }
   const withPrice = version==='C';
