@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<title>UiTPAS Balie prototype (organisator)</title>
+<link href="https://fonts.googleapis.com/css2?family=PT+Sans:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box}
+  body{margin:0;font-family:'PT Sans',Helvetica,Arial,sans-serif;background:#e9ebee;color:#333;
+       min-height:100vh;padding:24px 16px 110px;font-size:15px}
+  a{color:#337ab7;text-decoration:none}
+  a:hover{text-decoration:underline}
+  .stage{display:flex;justify-content:center;align-items:flex-start}
+
+  /* prototype-navigatie */
+  .nav{position:fixed;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #e7eaee;
+       display:flex;align-items:center;justify-content:space-between;padding:0 18px;z-index:50}
+  .nav button{border:1px solid #CFD3D3;background:#fff;border-radius:12px;padding:10px 16px;
+       font-family:inherit;font-size:14px;font-weight:700;cursor:pointer}
+  .homestack{position:fixed;top:16px;left:16px;z-index:60;display:flex;flex-direction:column;gap:8px;align-items:flex-start}
+  .home{border:1px solid #CFD3D3;background:#fff;border-radius:999px;text-decoration:none;
+       padding:8px 14px;font-family:inherit;font-weight:700;font-size:14px;cursor:pointer;display:flex;gap:8px;align-items:center;color:#6E7777}
+  .home.alt{background:#EAECEC}
+  .home:hover{text-decoration:none}
+  .gear{position:fixed;top:16px;right:16px;z-index:60;border:0;background:none;cursor:pointer;font-size:22px;color:#9aa3ab}
+  .panel{position:fixed;top:56px;right:16px;z-index:61;background:#fff;border:1px solid #CFD3D3;border-radius:14px;
+         box-shadow:0 12px 40px rgba(0,0,0,.16);padding:16px;width:260px;display:none}
+  .panel.open{display:block}
+  .panel h4{margin:10px 0 6px;font-size:12px;text-transform:uppercase;letter-spacing:.06em;color:#899494}
+  .panel .row{display:flex;flex-wrap:wrap;gap:6px}
+  .chip{border:1px solid #CFD3D3;background:#fff;border-radius:999px;padding:6px 11px;font-family:inherit;
+        font-size:12px;font-weight:700;cursor:pointer;color:#6E7777}
+  .chip.active{background:#168B8D;border-color:#168B8D;color:#fff}
+  .chip.dim{background:repeating-linear-gradient(45deg,#f4f4f4 0 4px,#e6e6e6 4px 8px);border-color:#d8d8d8;color:#9a9a9a}
+  .chip.dim.active{background:repeating-linear-gradient(45deg,#a3aaaa 0 4px,#949c9c 4px 8px);border-color:#949c9c;color:#fff}
+
+  /* ---- Balie ---- */
+  .app{width:100%;max-width:1300px;background:#fff;box-shadow:0 10px 34px rgba(15,27,45,.14);overflow:hidden}
+  .topbar{background:#2C3E50;color:#fff;display:flex;align-items:center;padding:0 18px;height:56px;font-size:15px}
+  .logo{display:flex;align-items:center;font-weight:700;font-size:19px;letter-spacing:.5px;margin-right:26px}
+  .logo .uit{background:#fff;color:#2C3E50;padding:1px 4px;border-radius:2px;font-size:16px;margin-right:1px}
+  .topbar .lnk{color:#fff;margin-right:26px;text-decoration:underline;cursor:pointer;font-size:16px}
+  .topbar .lnk.plain{text-decoration:none}
+  .topbar .right{margin-left:auto;display:flex;align-items:center;gap:18px;font-size:14px}
+  .btn-out{border:1px solid #fff;background:transparent;color:#fff;padding:7px 16px;font-family:inherit;font-size:14px;cursor:pointer}
+
+  .body{display:flex;min-height:620px;align-items:stretch}
+  .side{width:26%;min-width:290px;background:#F1F1F1;padding:18px;border-right:1px solid #e2e2e2}
+  .main{flex:1;padding:22px 26px;background:#fff}
+  hr.s{border:0;border-top:1px solid #dcdcdc;margin:14px 0}
+
+  .side label{display:block;font-weight:700;font-size:16px}
+  .side .sub{font-style:italic;color:#888;margin-bottom:8px}
+  .side input[type=text]{width:100%;padding:8px 10px;border:1px solid #ccc;background:#fff;font-family:inherit;font-size:15px}
+  .btn-blue{background:#2A3F9D;border:0;color:#fff;padding:9px 18px;font-family:inherit;font-size:15px;cursor:pointer;margin-top:14px}
+  .side .q{font-weight:700;margin-bottom:4px}
+
+  /* scanscherm */
+  .scan{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 0 40px;text-align:center;color:#7a7a7a}
+  .scan .t1{font-style:italic;font-size:17px;margin-top:26px}
+  .scan .t2{font-style:italic;font-weight:700;font-size:17px;margin-top:28px;color:#5f5f5f}
+  .scan .t3{font-style:italic;font-size:17px;color:#7a7a7a}
+  .foot{display:flex;align-items:center;justify-content:space-between;margin-top:40px;font-size:15px}
+  .foot .soc{display:flex;align-items:center;gap:16px;color:#777}
+  .ver{font-style:italic;color:#8a8a8a;margin-top:22px;font-size:14px}
+
+  /* profielscherm */
+  .nr{display:flex;justify-content:space-between;align-items:baseline}
+  .nr b{font-size:16px}
+  .lbl{color:#8a8a8a}
+  .rowsplit{display:flex;justify-content:space-between;align-items:center}
+  .badge3{background:#5CB85C;color:#fff;font-weight:700;padding:3px 10px;font-size:15px}
+  .kans{background:#fff;border:1px solid #ccc;padding:9px 11px;margin-top:6px}
+  .side .naam{font-weight:700}
+  .warn{display:flex;align-items:center;gap:8px;margin-top:12px}
+  .warn .i{background:#D9534F;color:#fff;width:19px;height:19px;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:none}
+
+  .sec{font-size:20px;letter-spacing:.04em;color:#444;margin:6px 0 8px}
+  .rule{border:0;border-top:1px solid #ddd;margin:0 0 14px}
+  .filters{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;margin-bottom:16px;flex-wrap:wrap}
+  .dr b{display:block;margin-bottom:5px}
+  select,.zoekrow input{padding:8px 10px;border:1px solid #ccc;font-family:inherit;font-size:15px;background:#fff}
+  .zoekrow{display:flex;flex:1;max-width:740px;justify-content:flex-end}
+  .zoekrow input{flex:1;max-width:600px;padding-left:30px;
+       background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23999'><path d='M15.5 14h-.79l-.28-.27a6.5 6.5 0 10-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1114 9.5 4.5 4.5 0 019.5 14z'/></svg>") no-repeat 8px center / 15px}
+  .zoekrow button{border:1px solid #ccc;background:#fff;padding:8px 18px;font-family:inherit;font-size:15px;cursor:pointer;border-left:0}
+
+  .arow{display:flex;align-items:stretch;border-bottom:1px solid #e6e6e6}
+  .arow .nm{flex:1;display:flex;align-items:center;padding:26px 6px;font-weight:700;color:#2A6496;font-size:17px}
+  .arow .nm a{color:#2A6496}
+  .cell{width:270px;flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;padding:16px 18px;text-align:center}
+  .cell.grey{background:#F4F4F4;border-bottom:3px solid #fff}
+  .plus{color:#55A555;font-weight:700}
+  .wbtn{border:1px solid #ccc;background:#fff;padding:8px 0;width:100%;font-family:inherit;font-size:15px;cursor:pointer}
+  .prijs .van{font-size:14px;color:#555;line-height:1.15}
+  .prijs .p{font-weight:700;font-size:17px;line-height:1.3}
+  .prijs .kt{font-size:14px;color:#555}
+  .gratis{font-style:italic;color:#555}
+  .modal-ov{position:fixed;inset:0;background:rgba(20,30,45,.5);z-index:70;display:flex;align-items:flex-start;justify-content:center;padding-top:70px}
+  .modal{background:#fff;width:760px;max-width:92%;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+  .modal-h{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;font-size:18px;border-bottom:1px solid #eee}
+  .modal-h .x{cursor:pointer;color:#888;font-size:20px}
+  .modal-b{padding:16px 20px}
+  .modal-info{background:#e7f0f7;color:#31708f;padding:14px 16px;margin-bottom:14px;line-height:1.4}
+  .modal-list{border:1px solid #eee;min-height:280px}
+  .mrow{display:flex;align-items:flex-start;gap:20px;padding:16px}
+  .mrow .mev{flex:1}
+  .mrow .mkt{color:#555;font-size:14px;margin-top:2px}
+  .modal-f{padding:14px 20px;display:flex;justify-content:flex-end;align-items:center;border-top:1px solid #eee}
+  .modal-f .annu{color:#2A6496;margin-right:18px;cursor:pointer}
+
+  /* prijzenmodal */
+  .ptable{width:100%;border-collapse:collapse;margin-top:16px}
+  .ptable th{font-size:16px;font-weight:700;padding:6px 10px 10px;border-bottom:2px solid #ddd;text-align:center}
+  .ptable td{padding:14px 10px;border-bottom:1px solid #eee;text-align:center;font-size:16px}
+  .ptable td.l{text-align:left;font-size:16px}
+  .ptable td.hi{background:#C9F5C1}
+  .ptable .radio{width:15px;height:15px;border-radius:99px;border:2px solid #2A6496;display:inline-block;position:relative;vertical-align:-2px}
+  .ptable .radio i{position:absolute;inset:2px;border-radius:99px;background:#2A6496;display:block}
+  .ptable .radio.off{border-color:#9a9a9a}
+  .ptable td.dis{color:#9a9a9a}
+  .ptable .niet{font-size:12px;font-style:italic;color:#A32D2D;margin-top:4px}
+  .legend{display:flex;align-items:center;gap:9px;margin-top:16px;font-style:italic;color:#555;font-size:15px}
+  .legend i{width:22px;height:15px;background:#C9F5C1;display:block;flex:none}
+  .minialert{background:#FCEBEB;border-left:3px solid #A32D2D;color:#A32D2D;font-size:12px;line-height:1.35;
+             padding:6px 8px;margin-top:8px;text-align:left}
+
+  /* kansentarief-blok in de zijbalk */
+  .bbox{padding:10px 12px;margin-top:8px;border-left:4px solid}
+  .bbox .kop{font-size:12px}
+  .bbox .bedrag{font-size:20px;font-weight:700;margin:2px 0}
+  .bbox .balk{height:6px;background:#fff;margin:6px 0 4px}
+  .bbox .balk i{display:block;height:6px}
+  .bbox .sub{font-size:12px;line-height:1.4}
+  .bbox .status{display:flex;align-items:center;gap:7px;font-size:15px;font-weight:700}
+  .bbox .status svg{flex:none}
+  .bg{background:#EAF3DE;border-color:#639922;color:#173404}
+  .bg .kop,.bg .sub{color:#3B6D11}
+  .bo{background:#FAEEDA;border-color:#BA7517;color:#412402}
+  .bo .kop,.bo .sub{color:#854F0B}
+  .br{background:#FCEBEB;border-color:#A32D2D;color:#501313}
+  .br .kop,.br .sub{color:#A32D2D}
+</style>
+</head>
+<body>
+
+<div class="homestack">
+  <a class="home" href="index.html">🎟️ Start pashouder</a>
+  <button class="home alt" onclick="go('scan')">🏢 Start organisator</button>
+</div>
+<button class="gear" onclick="togglePanel()">⚙️</button>
+
+<div class="panel" id="panel">
+  <h4>Ga naar scherm</h4>
+  <div class="row" id="flowRow"></div>
+  <h4>Scenario kansentarief</h4>
+  <div class="row" id="scRow"></div>
+  <h4>Weergave zijbalk</h4>
+  <div class="row" id="varRow"></div>
+</div>
+
+<div class="stage" id="stage"></div>
+
+<div class="nav">
+  <button onclick="prev()">← Vorige</button>
+  <button onclick="next()">Volgende →</button>
+</div>
+
+<script>
+const S={screen:'scan',tarief:{},punt:{},modal:false,undoing:null,scenario:'voldoende',variant:'status',prijs:null,keuze:'kans'};
+const ORDER=['scan','profiel'];
+const stage=document.getElementById('stage');
+
+const LOGO='<span class="logo"><span class="uit">UiT</span>PAS</span>';
+function topbar(){
+  return `<div class="topbar">
+    ${LOGO}
+    <span class="lnk plain">OrganisatieNaam <span style="font-size:11px">▼</span></span>
+    <span class="lnk">Balie wijzigen</span>
+    <span class="right"><span>Aangemeld als tester@publiq.be</span>
+      <button class="btn-out">Afmelden</button></span>
+  </div>`;
+}
+
+/* ---------- SCHERM 1: SCANNEN ---------- */
+const CARDHAND=`<svg width="230" height="150" viewBox="0 0 230 150" fill="none" stroke="#b3b3b3" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+  <rect x="26" y="8" width="118" height="74" rx="10" transform="rotate(-9 26 8)"/>
+  <path d="M96 92c14 4 30 6 44 6h44c6 0 10 4 10 9s-4 9-10 9h-40"/>
+  <path d="M144 116h42c6 0 10 4 10 9s-4 9-10 9h-42"/>
+  <path d="M144 134h34c6 0 10 4 10 8s-4 8-10 8h-52c-16 0-30-4-42-12L62 122c-5-4-6-10-2-14 4-4 10-4 15-1l21 14"/>
+  <path d="M96 92c-6-4-12-8-16-14"/>
+</svg>`;
+const FB='<svg viewBox="0 0 24 24" width="14" height="14" fill="#555"><path d="M13.5 21v-8h2.7l.4-3h-3.1V8.2c0-.9.3-1.5 1.5-1.5H17V4.1C16.7 4.1 15.6 4 14.4 4c-2.6 0-4.3 1.5-4.3 4.4V10H7.4v3h2.7v8h3.4z"/></svg>';
+const TW='<svg viewBox="0 0 24 24" width="14" height="14" fill="#555"><path d="M22 5.9c-.7.3-1.5.6-2.4.7.9-.5 1.5-1.3 1.8-2.3-.8.5-1.7.8-2.6 1a4.1 4.1 0 00-7 3.7A11.6 11.6 0 013.4 4.6a4.1 4.1 0 001.3 5.5c-.7 0-1.3-.2-1.9-.5v.1c0 2 1.4 3.6 3.3 4a4.1 4.1 0 01-1.8.1 4.1 4.1 0 003.8 2.8A8.2 8.2 0 012 18.3a11.6 11.6 0 006.3 1.8c7.5 0 11.6-6.2 11.6-11.6v-.5c.8-.6 1.5-1.3 2.1-2.1z"/></svg>';
+const EXT='<svg viewBox="0 0 24 24" width="13" height="13" fill="#555"><path d="M19 19H5V5h7V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7h-2v7zM14 3v2h3.6l-9.9 9.8 1.5 1.5L19 6.4V10h2V3h-7z"/></svg>';
+
+function scanScreen(){
+  return `<div class="app">
+    ${topbar()}
+    <div class="body">
+      <div class="side">
+        <label>UiTPAS-nummer</label>
+        <div class="sub">of Rijksregisternummer</div>
+        <input type="text" id="uitpasnr">
+        <button class="btn-blue" onclick="go('profiel')">Bevestigen</button>
+        <hr class="s">
+        <div class="q">Geen kaart?</div>
+        <a href="#" onclick="go('profiel');return false">Zoek een pashouder</a>
+      </div>
+      <div class="main">
+        <div class="scan">
+          ${CARDHAND}
+          <div class="t1">Scan de UiTPAS of vul het kaartnummer manueel in.</div>
+          <div class="t2">Nieuwe UiTPAS registreren?</div>
+          <div class="t3">Start met het scannen van een lege kaart.</div>
+        </div>
+        <div class="foot">
+          <div><a href="#" onclick="return false">Meld een probleem</a>&nbsp;&nbsp;&nbsp;&nbsp;<a href="#" onclick="return false">Help</a></div>
+          <div class="soc"><span>Volg ons op</span>
+            <a href="#" onclick="return false" style="color:#555">${FB} Facebook</a>
+            <a href="#" onclick="return false" style="color:#555">${TW} Twitter</a>
+            <a href="#" onclick="return false" style="color:#555">${EXT} Website</a></div>
+        </div>
+        <div class="ver">App versie 2026.05.27.073855</div>
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- KANSENTARIEF-BLOK ZIJBALK ---------- */
+const OK='<svg viewBox="0 0 24 24" width="19" height="19" fill="#3B6D11"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm-1 15l-5-5 1.4-1.4L11 13.2l5.6-5.6L18 9l-7 8z"/></svg>';
+const NOK='<svg viewBox="0 0 24 24" width="19" height="19" fill="#A32D2D"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm5 13.6L15.6 17 12 13.4 8.4 17 7 15.6 10.6 12 7 8.4 8.4 7 12 10.6 15.6 7 17 8.4 13.4 12 17 15.6z"/></svg>';
+const BUDGET={voldoende:{over:200,gebruikt:50},geen:{over:0,gebruikt:250}};
+
+function budgetBox(){
+  const sc=S.scenario, b=BUDGET[sc];
+  if(S.variant==='basis'){
+    const cls = sc==='voldoende'?'bg':'br';
+    const kleur = sc==='voldoende'?'#639922':'#A32D2D';
+    const sub = sc==='voldoende'?`€ ${b.gebruikt} van € 250 gebruikt`
+      : 'Op tot 1 mei 2027, enkel basistarief';
+    return `<div class="bbox ${cls}">
+      <div class="kop">Kansentarief budget 2026</div>
+      <div class="bedrag">€ ${b.over} over</div>
+      <div class="balk"><i style="width:${Math.round(b.gebruikt/250*100)}%;background:${kleur}"></i></div>
+      <div class="sub">${sub}</div>
+    </div>`;
+  }
+  /* statusregel: enkel ja of nee, geen bedragen */
+  if(sc==='geen'){
+    return `<div class="bbox br">
+      <div class="status">${NOK}Kansentarief niet beschikbaar</div>
+      <div class="sub" style="margin-top:4px">Deze pashouder kan dit jaar geen ticket meer kopen aan kansentarief. Het basisticket tarief kan wel.</div>
+    </div>`;
+  }
+  return `<div class="bbox bg">
+    <div class="status">${OK}Kansentarief beschikbaar</div>
+    <div class="sub" style="margin-top:4px">Deze pashouder kan een ticket kopen aan kansentarief.</div>
+  </div>`;
+}
+
+/* ---------- SCHERM 2: PROFIEL PASHOUDER ---------- */
+const ACTS=[
+  {id:'a1',naam:'Digisessie: Maak je eigen vakantie foto-album op je pc',punten:4,type:'kiezen',price:`<div class="prijs"><div class="van">vanaf</div><div class="p">€ 5</div></div>`,hist:'€ 5',basis:'€ 12',kans:'€ 5'},
+  {id:'a2',naam:'Concert',punten:1,type:'toekennen',price:`<div class="prijs"><div class="p">€ 6</div><div class="kt">aan kansentarief</div></div>`,hist:'€ 6',basis:'€ 15',kans:'€ 6'},
+  {id:'a3',naam:'Lezing over geschiedenis Belfort',punten:4,type:'gratis',price:''}
+];
+function act(a){
+  const left = S.punt[a.id]
+    ? `<div class="gratis">Punten gespaard</div>`
+    : `<div class="plus">+${a.punten}</div><button class="wbtn" onclick="setPunt('${a.id}')">Punten sparen</button>`;
+  let right;
+  if(S.tarief[a.id]==='basis') right=`<div class="gratis">Basistarief toegekend</div><div class="prijs"><div class="kt">${a.basis}</div></div>`;
+  else if(S.tarief[a.id]) right=`<div class="gratis">Tarief toegekend</div><a href="#" onclick="openModal();return false" style="font-style:italic">Historiek</a>`;
+  else if(a.type==='gratis') right=`<div class="gratis">Gratis</div>`;
+  else if(a.type==='kiezen' || S.scenario==='geen'){
+    /* geen budget: enkel het basistarief blijft mogelijk, dus altijd via de modal kiezen */
+    const geen=S.scenario==='geen';
+    const prijs = geen
+      ? `<div class="prijs"><div class="van">basistarief</div><div class="p">${a.basis}</div></div>`
+      : a.price;
+    const alert = geen
+      ? `<div class="minialert">Deze pashouder kan dit jaar geen ticket meer kopen aan kansentarief. Het basisticket tarief kan wel.</div>`
+      : '';
+    right=`${prijs}<button class="wbtn" onclick="openPrijs('${a.id}')">Tarief kiezen</button>${alert}`;
+  }
+  else right=`${a.price}<button class="wbtn" onclick="setTarief('${a.id}')">Tarief toekennen</button>`;
+  return `<div class="arow">
+    <div class="nm"><a href="#" onclick="return false">${a.naam}</a></div>
+    <div class="cell grey">${left}</div>
+    <div class="cell">${right}</div>
+  </div>`;
+}
+function setTarief(id,k){S.tarief[id]=k||'kans';S.prijs=null;render();}
+function openPrijs(id){S.prijs=id;S.keuze=S.scenario==='geen'?'basis':'kans';render();}
+function closePrijs(){S.prijs=null;render();}
+function kies(k){if(k==='kans'&&S.scenario==='geen')return;S.keuze=k;render();}
+function rad(on){return `<span class="radio${on?'':' off'}">${on?'<i></i>':''}</span>`;}
+function prijsModalHTML(){
+  const a=ACTS.find(x=>x.id===S.prijs); if(!a) return '';
+  const geen=S.scenario==='geen';
+  const kansCel = geen
+    ? `<td class="dis">${a.kans}<div class="niet">Niet beschikbaar dit jaar</div></td>`
+    : `<td class="hi" onclick="kies('kans')" style="cursor:pointer">${rad(S.keuze==='kans')}<div style="margin-top:6px">${a.kans}</div></td>`;
+  return `<div class="modal-ov" onclick="if(event.target===this)closePrijs()">
+    <div class="modal">
+      <div class="modal-h"><b>Prijzen</b><span class="x" onclick="closePrijs()">×</span></div>
+      <div class="modal-b">
+        <div style="font-size:17px">${a.naam}</div>
+        <table class="ptable">
+          <tr><th></th><th>Basistarief</th></tr>
+          <tr><td class="l">Basistarief</td>
+            <td class="${geen?'hi':''}" onclick="kies('basis')" style="cursor:pointer">${rad(S.keuze==='basis')}<div style="margin-top:6px">${a.basis}</div></td></tr>
+          <tr><td class="l">Kansentarief</td>${kansCel}</tr>
+        </table>
+        <div class="legend"><i></i>Laagste beschikbare tarief</div>
+        ${geen?`<div class="minialert" style="margin-top:14px">Deze pashouder kan dit jaar geen ticket meer kopen aan kansentarief. Het basisticket tarief kan wel.</div>`:''}
+      </div>
+      <div class="modal-f"><span class="annu" onclick="closePrijs()">Annuleren</span>
+        <button class="btn-blue" style="margin:0" onclick="setTarief('${a.id}',S.keuze)">Tarief toekennen</button></div>
+    </div>
+  </div>`;
+}
+function setPunt(id){S.punt[id]=true;render();}
+function openModal(){S.modal=true;S.undoing=null;render();}
+function closeModal(){S.modal=false;S.undoing=null;render();}
+function startUndo(id){S.undoing=id;render();}
+function cancelUndo(){S.undoing=null;render();}
+function confirmUndo(id){S.tarief[id]=false;S.undoing=null;render();}
+function modalHTML(){
+  const rows=ACTS.filter(a=>S.tarief[a.id]==='kans');
+  let body;
+  if(rows.length===0){
+    body=`<div class="modal-list" style="padding:16px">Deze gebruiker heeft nog geen tickets gekocht met korting.</div>`;
+  } else {
+    body=`<div class="modal-list">`+rows.map(a=>{
+      const undo = S.undoing===a.id
+        ? `<div style="text-align:right"><div style="font-weight:700;margin-bottom:6px">Ongedaan maken?</div><button class="wbtn" style="width:auto;padding:8px 16px" onclick="confirmUndo('${a.id}')">Bevestigen</button> <a href="#" onclick="cancelUndo();return false">Annuleren</a></div>`
+        : `<a href="#" onclick="startUndo('${a.id}');return false">Ongedaan maken</a>`;
+      return `<div class="mrow"><span>14/08/2026</span><div class="mev"><b>${a.naam}</b><div class="mkt">${a.hist} <i>aan kansentarief</i></div></div>${undo}</div>`;
+    }).join('')+`</div>`;
+  }
+  return `<div class="modal-ov" onclick="if(event.target===this)closeModal()">
+    <div class="modal">
+      <div class="modal-h"><b>Historiek verkochte tickets aan UiTPAS-tarief</b><span class="x" onclick="closeModal()">×</span></div>
+      <div class="modal-b">
+        <div class="modal-info">Hier vind je een chronologisch overzicht van de verkochte tickets van Jan Peeters aan deze balie. Activiteiten aan een andere balie kunnen daar ter plekke opgevraagd worden.</div>
+        ${body}
+      </div>
+      <div class="modal-f"><button class="btn-blue" style="margin:0" onclick="closeModal()">Sluiten</button></div>
+    </div>
+  </div>`;
+}
+function voordeel(naam,punten){
+  return `<div class="arow">
+    <div class="nm"><a href="#" onclick="return false">${naam}</a></div>
+    <div class="cell" style="width:270px"></div>
+    <div class="cell">
+      <div class="plus">-${punten}</div>
+      <button class="wbtn">Omruilen</button>
+    </div>
+  </div>`;
+}
+
+function profielScreen(){
+  return `<div class="app">
+    ${topbar()}
+    <div class="body">
+      <div class="side">
+        <a href="#" onclick="go('scan');return false">← Terug</a>
+        <div class="nr" style="margin-top:16px"><b>NR. 09000 00088 113</b><a href="#" onclick="return false">Blokkeren</a></div>
+        <hr class="s">
+        <div class="rowsplit"><span class="lbl">Gegevens</span><a href="#" onclick="return false">Aanpassen</a></div>
+        <div style="margin-top:10px;line-height:1.5">
+          <div class="naam">Jan Peeters</div>
+          <div>Groenerei 2</div>
+          <div>8000 Brugge</div>
+          <div>15/03/1985</div>
+        </div>
+        <div class="warn"><span class="i">!</span><a href="#" onclick="return false">Contactgegevens toevoegen</a></div>
+        <hr class="s">
+        <div class="rowsplit"><span class="lbl">Puntensaldo</span><span class="badge3">${3+ACTS.filter(a=>S.punt[a.id]).reduce((s,a)=>s+a.punten,0)}</span></div>
+        <div><a href="#" onclick="return false">Historiek</a></div>
+        <hr class="s">
+        <div class="lbl">♥ Kansenstatuut</div>
+        <div class="kans">UiTPAS Regio Brugge</div>
+        ${budgetBox()}
+        <hr class="s">
+        <div class="rowsplit"><span class="lbl">👥 Lidmaatschappen</span><a href="#" onclick="return false">Beheren</a></div>
+        <hr class="s">
+        <div class="lbl">🔖 Bonnen</div>
+        <hr class="s">
+        <div style="line-height:1.6">
+          <a href="#" onclick="return false">Historiek korting &amp; bonnen</a>
+        </div>
+      </div>
+      <div class="main">
+        <div class="sec">ACTIVITEITEN</div>
+        <hr class="rule">
+        <div class="filters">
+          <div class="dr"><b>Datumbereik</b>
+            <select><option>Vandaag</option><option>Deze week</option><option>Deze maand</option></select>
+          </div>
+          <div class="zoekrow"><input type="text"><button>Zoeken</button></div>
+        </div>
+        ${ACTS.map(act).join('')}
+        <div class="sec" style="margin-top:34px">VOORDELEN</div>
+        <hr class="rule">
+        ${voordeel('Testvoordeel met pincodes',1)}
+        ${voordeel('Testvoordeel met pincodes',1)}
+        ${voordeel('eerlijk kopje koffie',2)}
+      </div>
+    </div>
+  </div>`;
+}
+
+/* ---------- ROUTER ---------- */
+function render(){
+  let h='';
+  switch(S.screen){
+    case 'scan':h=scanScreen();break;
+    case 'profiel':h=profielScreen();break;
+  }
+  stage.innerHTML=h+(S.modal?modalHTML():'')+(S.prijs?prijsModalHTML():'');
+  renderPanel();
+}
+function go(sc){S.modal=false;S.prijs=null;if(sc==='scan'){S.tarief={};S.punt={};}S.screen=sc;render();window.scrollTo(0,0);}
+function prev(){const i=ORDER.indexOf(S.screen);if(i>0)go(ORDER[i-1]);}
+function next(){const i=ORDER.indexOf(S.screen);if(i>-1&&i<ORDER.length-1)go(ORDER[i+1]);}
+
+/* ---------- MODERATORPANEEL ---------- */
+function togglePanel(){document.getElementById('panel').classList.toggle('open');}
+function setScenario(s){S.scenario=s;render();}
+function setVariant(v){S.variant=v;render();}
+function renderPanel(){
+  const fl=[['scan','Start balie'],['profiel','Profiel pashouder']];
+  document.getElementById('flowRow').innerHTML=fl.map(x=>
+    `<button class="chip ${S.screen===x[0]?'active':''}" onclick="go('${x[0]}')">${x[1]}</button>`).join('');
+  const sc=[['voldoende','Voldoende budget'],['geen','Geen budget']];
+  document.getElementById('scRow').innerHTML=sc.map(x=>
+    `<button class="chip ${S.scenario===x[0]?'active':''}" onclick="setScenario('${x[0]}')">${x[1]}</button>`).join('');
+  const va=[['status','Statusregel'],['basis','Met budget']];
+  document.getElementById('varRow').innerHTML=va.map(x=>
+    `<button class="chip ${x[0]==='basis'?'dim ':''}${S.variant===x[0]?'active':''}" onclick="setVariant('${x[0]}')">${x[1]}</button>`).join('');
+}
+render();
+</script>
+</body>
+</html>
