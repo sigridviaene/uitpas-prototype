@@ -35,6 +35,8 @@
   .chip.active{background:#168B8D;border-color:#168B8D;color:#fff}
   .chip.dim{background:repeating-linear-gradient(45deg,#f4f4f4 0 4px,#e6e6e6 4px 8px);border-color:#d8d8d8;color:#9a9a9a}
   .chip.dim.active{background:repeating-linear-gradient(45deg,#a3aaaa 0 4px,#949c9c 4px 8px);border-color:#949c9c;color:#fff}
+  .scode{font-size:11px;color:#c3cad0;letter-spacing:.04em;user-select:all;cursor:pointer;font-weight:700}
+  .scode.hidden{visibility:hidden}
 
   /* ---- Balie ---- */
   .app{width:100%;max-width:1300px;background:#fff;box-shadow:0 10px 34px rgba(15,27,45,.14);overflow:hidden}
@@ -165,6 +167,7 @@
 
 <div class="nav">
   <button onclick="prev()">← Vorige</button>
+  <span class="scode" id="scode" onclick="copyCode()" title="Schermnaam, klik om te kopiëren. Verbergen met de toets n"></span>
   <button onclick="next()">Volgende →</button>
 </div>
 
@@ -252,13 +255,12 @@ function budgetBox(){
   if(sc==='geen'){
     return `<div class="bbox br">
       <div class="status">${NOK}Kansentarief niet beschikbaar</div>
-      <div class="sub" style="margin-top:4px">Deze pashouder kan dit jaar geen ticket meer kopen aan kansentarief. Het basisticket tarief kan wel.</div>
+      <div class="sub" style="margin-top:4px">Deze pashouder kan geen ticket kopen aan kansentarief omdat het budget opgebruikt is. Een ticket aan basistarief kan wel.</div>
+      <div class="sub" style="margin-top:10px">Op 1 mei vernieuwt het kansentarief budget.</div>
     </div>`;
   }
-  return `<div class="bbox bg">
-    <div class="status">${OK}Kansentarief beschikbaar</div>
-    <div class="sub" style="margin-top:4px">Deze pashouder kan een ticket kopen aan kansentarief.</div>
-  </div>`;
+  /* voldoende budget: geen melding in de zijbalk */
+  return '';
 }
 
 /* ---------- SCHERM 2: PROFIEL PASHOUDER ---------- */
@@ -281,10 +283,8 @@ function act(a){
     const prijs = geen
       ? `<div class="prijs"><div class="van">basistarief</div><div class="p">${a.basis}</div></div>`
       : a.price;
-    const alert = geen
-      ? `<div class="minialert">Deze pashouder kan dit jaar geen ticket meer kopen aan kansentarief. Het basisticket tarief kan wel.</div>`
-      : '';
-    right=`${prijs}<button class="wbtn" onclick="openPrijs('${a.id}')">Tarief kiezen</button>${alert}`;
+    /* geen alert per rij: de waarschuwing staat in de zijbalk en in de prijzenmodal */
+    right=`${prijs}<button class="wbtn" onclick="openPrijs('${a.id}')">Tarief kiezen</button>`;
   }
   else right=`${a.price}<button class="wbtn" onclick="setTarief('${a.id}')">Tarief toekennen</button>`;
   return `<div class="arow">
@@ -302,7 +302,7 @@ function prijsModalHTML(){
   const a=ACTS.find(x=>x.id===S.prijs); if(!a) return '';
   const geen=S.scenario==='geen';
   const kansCel = geen
-    ? `<td class="dis">${a.kans}<div class="niet">Niet beschikbaar dit jaar</div></td>`
+    ? `<td class="dis">${a.kans}<div class="niet">Kansentarief niet beschikbaar</div></td>`
     : `<td class="hi" onclick="kies('kans')" style="cursor:pointer">${rad(S.keuze==='kans')}<div style="margin-top:6px">${a.kans}</div></td>`;
   return `<div class="modal-ov" onclick="if(event.target===this)closePrijs()">
     <div class="modal">
@@ -316,7 +316,8 @@ function prijsModalHTML(){
           <tr><td class="l">Kansentarief</td>${kansCel}</tr>
         </table>
         <div class="legend"><i></i>Laagste beschikbare tarief</div>
-        ${geen?`<div class="minialert" style="margin-top:14px">Deze pashouder kan dit jaar geen ticket meer kopen aan kansentarief. Het basisticket tarief kan wel.</div>`:''}
+        ${geen?`<div class="minialert" style="margin-top:14px">Deze pashouder kan geen ticket kopen aan kansentarief omdat het budget opgebruikt is. Een ticket aan basistarief kan wel.
+          <div style="margin-top:10px">Op 1 mei vernieuwt het kansentarief budget.</div></div>`:''}
       </div>
       <div class="modal-f"><span class="annu" onclick="closePrijs()">Annuleren</span>
         <button class="btn-blue" style="margin:0" onclick="setTarief('${a.id}',S.keuze)">Tarief toekennen</button></div>
@@ -425,10 +426,29 @@ function render(){
   }
   stage.innerHTML=h+(S.modal?modalHTML():'')+(S.prijs?prijsModalHTML():'');
   renderPanel();
+  paintCode();
 }
 function go(sc){S.modal=false;S.prijs=null;if(sc==='scan'){S.tarief={};S.punt={};}S.screen=sc;render();window.scrollTo(0,0);}
 function prev(){const i=ORDER.indexOf(S.screen);if(i>0)go(ORDER[i-1]);}
 function next(){const i=ORDER.indexOf(S.screen);if(i>-1&&i<ORDER.length-1)go(ORDER[i+1]);}
+
+/* ---------- SCHERMNAMEN ---------- */
+function screenCode(){
+  const sc = S.scenario==='geen' ? 'GB' : 'VB';
+  const va = S.variant==='basis' ? 'budget' : 'status';
+  if(S.prijs) return 'ORG-prijzen · '+sc;
+  if(S.modal) return 'ORG-historiek · '+sc;
+  if(S.screen==='scan') return 'ORG-scan';
+  return 'ORG-profiel · '+sc+' · '+va;
+}
+function paintCode(){const el=document.getElementById('scode');if(el)el.textContent=screenCode();}
+function copyCode(){const t=screenCode();if(navigator.clipboard)navigator.clipboard.writeText(t);}
+document.addEventListener('keydown',function(e){
+  if(e.key!=='n'||e.metaKey||e.ctrlKey)return;
+  const t=(e.target.tagName||'').toLowerCase();
+  if(t==='input'||t==='textarea')return;
+  document.getElementById('scode').classList.toggle('hidden');
+});
 
 /* ---------- MODERATORPANEEL ---------- */
 function togglePanel(){document.getElementById('panel').classList.toggle('open');}
